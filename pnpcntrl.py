@@ -14,6 +14,10 @@ from PyQt4.Qt import *
 from PyQt4 import QtGui, QtCore
 
 import sys
+import serial
+import time
+
+serial = serial.Serial("/dev/ttyUSB1", baudrate=9600)
 
 # check out this QT serial library http://qt-project.org/wiki/QtSerialPort
 # in leiu of serial port, redirect stdout  to file, then send file with comms program:
@@ -77,7 +81,8 @@ class Painting(QWidget):
         self.currentPos=QPoint(endPoint)
         vx=self.currentPos.x()
         vy=self.currentPos.y()
-        print 'DEBUG> MOVE ' + 'G1','X'+str(vx),'Y'+str(vy)
+        print 'DEBUG> MOVE ' + 'G1','X'+str(vx)+'Y'+str(vy)
+        serial.write("DEBUG> MOVE G1 X"+str(vx)+"Y"+str(vy))
         #bitBlt(self, 0, 0, self.buffer)
 
 
