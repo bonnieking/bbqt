@@ -6,7 +6,9 @@
 # bigger example http://ftp.ics.uci.edu/pub/centos0/ics-custom-build/BUILD/PyQt-x11-gpl-4.7.2/examples/widgets/scribble.py
 # event3.py
 #
-from qt import *
+from PyQt4.Qt import *
+from PyQt4 import QtGui, QtCore
+
 import sys
 
 # check out this QT serial library http://qt-project.org/wiki/QtSerialPort
@@ -50,44 +52,44 @@ def Log_String( String, InitFile=False ) :
 class Painting(QWidget):
 
     def __init__(self, *args):
-        apply(QWidget.__init__,(self, ) + args)
-        self.buffer = QPixmap()
+        super(Painting, self).__init__()
+        imageSize = QtCore.QSize(500, 500)
+        self.image = QtGui.QImage(imageSize, QtGui.QImage.Format_RGB32)
+        self.lastPoint = QtCore.QPoint()
+        self.currentPos = QPoint(0,0)
+        self.image.fill(QtGui.qRgb(255, 255, 255))
 
-    def paintEvent(self, ev):
-        # blit the pixmap
-        bitBlt(self, 0, 0, self.buffer)
+    def paintEvent(self, event):
+        painter = QtGui.QPainter(self)
+        painter.drawImage(event.rect(), self.image)
 
     def mouseMoveEvent(self, ev):
-        self.p = QPainter()
-        self.p.begin(self.buffer)
-        self.p.drawLine(self.currentPos, ev.pos())
-        self.currentPos=QPoint(ev.pos())
-        #Ed_B
-        # orig       print self.currentPos
-        # new but bug print (self.currentPos.x() ," ", self.currentPos.y())
-        # works        print self.currentPos.x(), self.currentPos.y()
+        endPoint = ev.pos()
+        painter = QtGui.QPainter(self.image)
+        painter.setPen(QtGui.QPen(QtGui.QColor(20, 20, 20), 10, QtCore.Qt.SolidLine))
+        painter.drawPoint(self.currentPos)
+        self.modified = True
+        self.update()
+        self.currentPos=QPoint(endPoint)
         vx=self.currentPos.x()
         vy=self.currentPos.y()
-        print 'G1','X'+str(vx),'Y'+str(vy)
-        self.p.flush()
-        self.p.end()
-        bitBlt(self, 0, 0, self.buffer)
+        print 'DEBUG MOVE ' + 'G1','X'+str(vx),'Y'+str(vy)
+        #bitBlt(self, 0, 0, self.buffer)
+
 
     def mousePressEvent(self, ev):
-        self.p = QPainter()
-        self.p.begin(self.buffer)
-        self.p.drawPoint(ev.pos())
         self.currentPos=QPoint(ev.pos())
-        self.p.flush()
-        self.p.end()
-        bitBlt(self, 0, 0, self.buffer)
+        vx=self.currentPos.x()
+        vy=self.currentPos.y()
+        print 'DEBUG PRESS' + 'G1','X'+str(vx),'Y'+str(vy)
+        #bitBlt(self, 0, 0, self.buffer)
 
-    def resizeEvent(self, ev):
-        tmp = QPixmap(self.buffer.size())
-        bitBlt(tmp, 0, 0, self.buffer)
-        self.buffer.resize(ev.size())
-        self.buffer.fill()
-        bitBlt(self.buffer, 0, 0, tmp)
+    #def resizeEvent(self, ev):
+        #tmp = QPixmap(self.buffer.size())
+        #bitBlt(tmp, 0, 0, self.buffer)
+        #self.buffer.resize(ev.size())
+        #self.buffer.fill()
+        #bitBlt(self.buffer, 0, 0, tmp)
 
 class MainWindow(QMainWindow):
 
@@ -99,12 +101,14 @@ class MainWindow(QMainWindow):
 def main(args):
   app=QApplication(args)
   win=MainWindow()
+  win.setGeometry(300, 300, 500, 500)
+  win.setWindowTitle('Points')
   win.show()
   app.connect(app, SIGNAL("lastWindowClosed()")
                  , app
                  , SLOT("quit()")
                  )
-  app.exec_loop()
+  app.exec_()
 
 if __name__=="__main__":
   main(sys.argv)
